@@ -1,35 +1,15 @@
-<div class="panel panel-default" ng-controller="SiteController">
-  <div class="panel-heading">
-    <h4 class="panel-title">
-      <a data-toggle="collapse" data-parent="#accordion" href="#collapse-{{site.id}}">
-        <span ng-bind="site.name"></span>
-      </a>
-    </h4>
+<div class="row" ng-controller="SiteController">
+  <h2 class="text-center">{{site.name}}</h2>
+  <div class="col-md-3">
+    <div class="embed-responsive embed-responsive-4by3">
+      <div class="embed-responsive-item" id="player-{{site.id}}"></div>
+    </div>
   </div>
-  <div id="collapse-{{site.id}}" class="panel-collapse collapse">
-    <div class="panel-body">
-      <div class="row">
-        <div class="col-md-5">
-          <div class="embed-responsive embed-responsive-4by3">
-            <div class="embed-responsive-item" id="player-{{site.id}}"></div>
-          </div>
-        </div>
-        <div class="col-md-7" ng-bind-html="analysis"></div>
-      </div>
-    </div>
-        <div class="row">
-      <div class="col-md-12">
-        <h3 style="padding-left:10px">Surf</h3>
-        <canvas class="chart chart-line" chart-data="surfData" chart-labels="surfLabels" chart-series="surfSeries" chart-legend="true">
-        </canvas>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <h3 style="padding-left:10px">Tides</h3>
-        <canvas class="chart chart-line" chart-data="tideData" chart-labels="tideLabels">
-        </canvas>
-      </div>
-    </div>
+  <div class="col-md-3">
+    <h3 style="padding-left:10px">Surf</h3>
+    <canvas class="chart chart-line" chart-data="surfData" chart-labels="surfLabels" chart-series="surfSeries" chart-legend="true">
+    </canvas>
+  </div>
+  <div class="col-md-6" ng-bind-html="analysis">
   </div>
 </div>

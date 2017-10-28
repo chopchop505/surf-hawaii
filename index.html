@@ -18,7 +18,7 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
+            <li class="active"><a href="#">Big Island (Kona)</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div><!--/.container-fluid -->
@@ -26,8 +26,24 @@
 
     <div class="row">
       <div class="col-md-12">
-        <div class="panel-group" id="accordion" ng-controller="SurfController">
-          <ss-panel ng-repeat="site in sites"></ss-panel>
+        <div class="panel-group" ng-controller="SurfController">
+          <div ng-repeat="region in regions">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a>
+                    <span ng-bind="region.name"></span>
+                  </a>
+                </h4>
+              </div>
+              <div class="panel-body">
+                <div ng-repeat="site in region.sites">
+                  <ss-panel></ss-panel>
+                  <hr>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
