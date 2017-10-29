@@ -12,32 +12,18 @@ app.config(function($sceDelegateProvider) {
 
 app.controller('SurfController', ['$scope', '$http', function($scope, $http) {
     // For more streams, add their name/ID here.
-    $scope.sites = [{
-        id: 4762,
-        name: 'Banyans, HI'
-    }, {
-        id: 13830,
-        name: 'Kahalu\'u, HI'
-    }, {
-        id: 4763,
-        name: 'Kawaihae, HI'
-    }, {
-        id: 10823,
-        name: 'Pine Trees, HI'
-    }, {
-        id: 4750,
-        name: 'Pipeline, HI'
-    }, {
-        id: 4193,
-        name: 'Morro, Beach, SF'
-    }, {
-        id: 5065,
-        name: 'Pismo Beach, SF'
-    }, {
-        id: 4127,
-        name: 'Ocean Beach, SF'
+    $scope.regions = [{
+      name: 'Big Island (Kona)',
+      sites: [{
+          id: 4762,
+          name: 'Banyans, HI'
+      }, {
+          id: 13830,
+          name: 'Kahalu\'u, HI'
+      }]
     }];
 }]);
+
 
 app.controller('SiteController', ['$scope', '$http', '$sce', function($scope, $http, $sce) {
     console.debug('Instantiating SiteController');
@@ -45,8 +31,6 @@ app.controller('SiteController', ['$scope', '$http', '$sce', function($scope, $h
     // API query params
     var days = 3;
     var resources = 'wind,surf,analysis,weather,tide,sort,watertemp';
-
-    var isInitialized = false;
 
     $scope.analysis;
     $scope.tide;
@@ -60,52 +44,42 @@ app.controller('SiteController', ['$scope', '$http', '$sce', function($scope, $h
     $scope.surfSeries = ['Surf Min', 'Surf Max'];
     $scope.surfLabels = [];
 
-    $scope.$on('ss.fetch', function() {
+    console.dir('Fetching forecast for site ID: ' + $scope.site.id);
+    var url = 'http://api.surfline.com/v1/forecasts/'+$scope.site.id+'?resources='+resources+'&days='+days+'&getAllSpots=false&units=e&interpolate=false&showOptimal=false';
 
-        if(isInitialized) {
-            console.log('Already initialized');
-            return;
-        }
+    $http.jsonp(url).then(
+        function(response) {
+            console.dir('Got forecast');
+            console.dir(response);
 
-        console.dir('Fetching forecast for site ID: ' + $scope.site.id);
-        var url = 'http://api.surfline.com/v1/forecasts/'+$scope.site.id+'?resources='+resources+'&days='+days+'&getAllSpots=false&units=e&interpolate=false&showOptimal=false';
+            var forecast = response.data;
 
-        $http.jsonp(url).then(
-            function(response) {
-                console.dir('Got forecast');
-                console.dir(response);
+            $scope.analysis = $sce.trustAsHtml(forecast.Analysis.short_term_forecast);
 
-                var forecast = response.data;
+            $scope.tide = response.data.Tide;
 
-                $scope.analysis = $sce.trustAsHtml(forecast.Analysis.short_term_forecast);
+            angular.forEach(response.data.Tide.dataPoints, function(value, key) {
+                var t = moment(value.Localtime).format('ddd, hA');
 
-                $scope.tide = response.data.Tide;
-
-                angular.forEach(response.data.Tide.dataPoints, function(value, key) {
-                    var t = moment(value.Localtime).format('ddd, hA');
-
-                    $scope.tideLabels.push(t);
-                    $scope.tideData[0].push(value.height);
-                });
-
-                // Surf data is in a nested array.
-                // Each element of the root array contains a list of timestamps.
-                angular.forEach(forecast.Surf.dateStamp, function(value, i) {
-                    angular.forEach(value, function(dateString, j) {
-                        var t = moment(dateString).format('ddd, hA');
-
-                        $scope.surfLabels.push(t);
-                        $scope.surfData[0].push(forecast.Surf.surf_min[i][j]);
-                        $scope.surfData[1].push(forecast.Surf.surf_max[i][j]);
-                    });
-                });
-            }, function(err) {
-                console.dir('Error obtaining forecast');
-                console.dir(err);
+                $scope.tideLabels.push(t);
+                $scope.tideData[0].push(value.height);
             });
 
-        isInitialized = true;
-    });
+            // Surf data is in a nested array.
+            // Each element of the root array contains a list of timestamps.
+            angular.forEach(forecast.Surf.dateStamp, function(value, i) {
+                angular.forEach(value, function(dateString, j) {
+                    var t = moment(dateString).format('ddd, hA');
+
+                    $scope.surfLabels.push(t);
+                    $scope.surfData[0].push(forecast.Surf.surf_min[i][j]);
+                    $scope.surfData[1].push(forecast.Surf.surf_max[i][j]);
+                });
+            });
+        }, function(err) {
+            console.dir('Error obtaining forecast');
+            console.dir(err);
+        });
 }]);
 
 app.directive('ssPanel', ['$http', function($http) {
@@ -118,43 +92,31 @@ app.directive('ssPanel', ['$http', function($http) {
 
             var playerId = '#player-' + $scope.site.id;
 
-            element.on('hidden.bs.collapse', function(event) {
-                console.log('Removing player ' + playerId);
-                if(player) player.destroy();
-            });
 
-            element.on('shown.bs.collapse', function(event) {
-                event.stopPropagation();
-                console.dir('show.bs.collapse');
+            var url = 'http://api.surfline.com/v1/cams/' + $scope.site.id;
 
-                var url = 'http://api.surfline.com/v1/cams/' + $scope.site.id;
+            console.log(url);
 
-                console.log(url);
+            $http.jsonp(url).then(
+                function(response) {
+                    console.log('Got response from Cam ID: ', $scope.site.id);
+                    console.dir(response);
 
-                $http.jsonp(url).then(
-                    function(response) {
-                        console.log('Got response from Cam ID: ', $scope.site.id);
-                        console.dir(response);
+                    var stream = response.data.streamInfo.stream[0].file;
 
-                        var stream = response.data.streamInfo.stream[0].file;
+                    console.log('Player ' + playerId + ' playing stream: ' + stream);
 
-                        console.log('Player ' + playerId + ' playing stream: ' + stream);
-
-                        player = new Clappr.Player({
-                            parentId: playerId,
-                            source: stream,
-                            autoPlay: true,
-                            width: '100%',
-                            height: '100%'
-                        });
-                    }, function(err) {
-                        console.dir('Error reading Surfline API');
-                        console.dir(err);
+                    player = new Clappr.Player({
+                        parentId: playerId,
+                        source: stream,
+                        autoPlay: true,
+                        width: '100%',
+                        height: '100%'
                     });
-
-                // Broadcast event downards to trigger controllers to fetch aditional data.
-                $scope.$broadcast('ss.fetch');
-            });
+                }, function(err) {
+                    console.dir('Error reading Surfline API');
+                    console.dir(err);
+                });
         }
     }
 }]);
