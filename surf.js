@@ -93,7 +93,7 @@ app.directive('ssPanel', ['$http', function($http) {
             var playerId = '#player-' + $scope.site.id;
 
 
-            var url = 'http://api.surfline.com/v1/cams/' + $scope.site.id;
+            var url = 'https://cams.cdn-surfline.com/cdn-wc/hi-banyans/chunklist.m3u8';
 
             console.log(url);
 
